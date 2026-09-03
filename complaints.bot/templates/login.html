@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multichannel Network Login Screen</title>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eef4fc;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(26, 115, 232, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(26, 115, 232, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(219, 234, 254, 0.5) 0%, transparent 80%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* SVG Background Wave Effects */
+        .bg-wave-left {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 45%;
+            height: 60%;
+            background: linear-gradient(135deg, rgba(219, 234, 254, 0.7) 0%, rgba(239, 246, 255, 0.3) 100%);
+            border-top-right-radius: 100% 80%;
+            z-index: 1;
+        }
+
+        .bg-wave-right {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 40%;
+            height: 70%;
+            background: linear-gradient(225deg, rgba(219, 234, 254, 0.6) 0%, rgba(239, 246, 255, 0.2) 100%);
+            border-bottom-left-radius: 90% 80%;
+            z-index: 1;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 950px;
+            padding: 40px;
+        }
+
+        /* Left Side Branding */
+        .brand-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding-right: 40px;
+        }
+
+        .wifi-icon-container {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .wifi-icon-container i {
+            font-size: 50px;
+            color: #2563eb;
+        }
+
+        .brand-name {
+            font-size: 20px;
+            font-weight: 800;
+            color: #1e3a8a;
+            letter-spacing: 1.5px;
+            margin-bottom: 4px;
+        }
+
+        .brand-sub {
+            font-size: 13px;
+            font-weight: 700;
+            color: #2563eb;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+
+        .brand-divider {
+            width: 180px;
+            height: 1px;
+            background: #cbd5e1;
+            margin-bottom: 15px;
+        }
+
+        .system-title {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* Right Side Card */
+        .card-section {
+            width: 420px;
+        }
+
+        .login-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 35px 32px;
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            text-align: center;
+        }
+
+        .lock-badge {
+            width: 50px;
+            height: 50px;
+            background: #eff6ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px auto;
+        }
+
+        .lock-badge i {
+            font-size: 20px;
+            color: #2563eb;
+        }
+
+        .welcome-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+
+        .welcome-sub {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 24px;
+        }
+
+        .error-box {
+            background: #fef2f2;
+            border: 1px solid #fee2e2;
+            color: #ef4444;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 18px;
+            text-align: left;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i.left-icon {
+            position: absolute;
+            left: 12px;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .input-wrapper i.toggle-pwd {
+            position: absolute;
+            right: 12px;
+            color: #94a3b8;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 10px 36px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s;
+            color: #1e293b;
+        }
+
+        .input-wrapper input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #64748b;
+            cursor: pointer;
+        }
+
+        .remember-me input {
+            accent-color: #2563eb;
+        }
+
+        .forgot-pass {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 11px;
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: #1d4ed8;
+        }
+
+        .or-divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0 16px 0;
+            color: #94a3b8;
+            font-size: 11px;
+        }
+
+        .or-divider::before, .or-divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .or-divider span {
+            padding: 0 10px;
+        }
+
+        .security-note {
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .footer-text {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: #94a3b8;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-wave-left"></div>
+    <div class="bg-wave-right"></div>
+
+    <div class="container">
+        <!-- Left Section -->
+        <div class="brand-section">
+            <div class="wifi-icon-container">
+                <i class="fa-solid fa-wifi"></i>
+            </div>
+            <div class="brand-name">MULTICHANNEL</div>
+            <div class="brand-sub">NETWORK</div>
+            <div class="brand-divider"></div>
+            <div class="system-title">Internet Complaint Management System</div>
+        </div>
+
+        <!-- Right Section -->
+        <div class="card-section">
+            <div class="login-card">
+                <div class="lock-badge">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div class="welcome-title">Welcome Back</div>
+                <div class="welcome-sub">Login to Internet Complaint Management System</div>
+
+                {% if error %}
+                <div class="error-box">
+                    <i class="fa-regular fa-circle-xmark"></i>
+                    <span>{{ error }}</span>
+                </div>
+                {% endif %}
+
+                <form action="/login" method="POST">
+                    <div class="form-group">
+                        <label>Username / Email</label>
+                        <div class="input-wrapper">
+                            <i class="fa-regular fa-user left-icon"></i>
+                            <input type="text" name="username" placeholder="Enter username or email" required autocomplete="off">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-lock left-icon"></i>
+                            <input type="password" id="passwordInput" name="password" placeholder="Enter your password" required>
+                            <i class="fa-regular fa-eye toggle-pwd" onclick="togglePassword()"></i>
+                        </div>
+                    </div>
+
+                    <div class="form-options">
+                        <label class="remember-me">
+                            <input type="checkbox"> Remember Me
+                        </label>
+                        <a href="#" class="forgot-pass">Forgot Password?</a>
+                    </div>
+
+                    <button type="submit" class="btn-submit">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i> LOGIN
+                    </button>
+                </form>
+
+                <div class="or-divider">
+                    <span>OR</span>
+                </div>
+
+                <div class="security-note">
+                    <i class="fa-regular fa-shield-halved"></i> Secure login to your account
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-text">
+        &copy; 2026 Multichannel Network. All rights reserved.
+    </div>
+
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('passwordInput');
+            const icon = event.target;
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
+</body>
+</html>

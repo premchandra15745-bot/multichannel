@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ONT Details - Multichannel Network</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="bg-slate-100 font-sans text-slate-700 flex h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between hidden md:flex">
+    <div>
+      <div class="p-4 flex items-center gap-3 border-b border-slate-800">
+        <i class="fa-solid fa-wifi text-blue-500 text-2xl"></i>
+        <h1 class="font-bold text-white leading-tight">MULTICHANNEL<br><span class="text-blue-400 text-xs tracking-widest">NETWORK</span></h1>
+      </div>
+      <nav class="p-4 space-y-4 text-xs font-semibold">
+        <a href="/" class="flex items-center gap-3 text-slate-400 hover:text-white p-2 rounded-md"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+        <div>
+          <p class="text-slate-500 uppercase tracking-wider mb-2 text-[10px]">Complaint Management</p>
+          <div class="space-y-1 text-slate-400 pl-2">
+            <a href="/new-complaint" class="block py-1 hover:text-white"><i class="fa-regular fa-plus-square mr-2"></i> New Complaint</a>
+            <a href="/complaint-list" class="block py-1 hover:text-white"><i class="fa-solid fa-list mr-2"></i> Complaint List</a>
+          </div>
+        </div>
+        <div>
+          <p class="text-slate-500 uppercase tracking-wider mb-2 text-[10px]">Customer Management</p>
+          <div class="space-y-1 text-slate-400 pl-2">
+            <a href="/all-customers" class="block py-1 hover:text-white"><i class="fa-solid fa-users mr-2"></i> All Customers</a>
+          </div>
+        </div>
+        <div>
+          <p class="text-slate-500 uppercase tracking-wider mb-2 text-[10px]">ONT Management</p>
+          <div class="space-y-1 text-slate-400 pl-2">
+            <a href="/ont-details" class="flex items-center gap-2 bg-blue-600 text-white p-2 rounded-md"><i class="fa-solid fa-server"></i> ONT Details</a>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 overflow-y-auto">
+    <header class="bg-white p-4 shadow-sm flex justify-between items-center px-6">
+      <div>
+        <h2 class="text-lg font-bold text-slate-800">ONT Details</h2>
+        <p class="text-[11px] text-slate-400">Dashboard > ONT Management > <span class="text-slate-600">ONT Details</span></p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <p class="text-xs font-bold text-slate-800">Admin</p>
+          <p class="text-[10px] text-slate-400">Super Admin</p>
+        </div>
+        <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold">A</div>
+      </div>
+    </header>
+
+    <div class="p-6 space-y-6">
+
+      <!-- Chart -->
+      <div class="bg-white p-5 rounded-xl border shadow-sm">
+        <h3 class="font-bold text-sm text-slate-800 mb-4"><i class="fa-solid fa-chart-column text-blue-500 mr-2"></i> Location Wise ONT Stock (Installed vs Remaining)</h3>
+        <div class="h-56 relative w-full">
+          <canvas id="ontLocationChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
+        <div class="relative w-full md:w-80">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+          <input type="text" id="searchInput" onkeyup="filterOnts()" placeholder="Search by MAC, Username, Location..." class="w-full pl-9 pr-3 py-2 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div class="flex gap-2 w-full md:w-auto justify-end">
+          <button onclick="openModal('add')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> Add ONT Details
+          </button>
+          <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2">
+            <i class="fa-solid fa-file-excel"></i> Export to Excel
+          </button>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+        <div class="p-4 border-b flex justify-between items-center">
+          <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-server text-blue-600 mr-2"></i> All Allocated ONT List</h3>
+          <p class="text-xs text-slate-500">Total Entries: <span id="ontCount" class="font-bold text-blue-600">0</span></p>
+        </div>
+
+        <div class="overflow-x-auto max-h-[500px]">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="sticky top-0 bg-slate-100 border-b">
+              <tr class="text-slate-600 font-bold">
+                <th class="p-3">S.No</th>
+                <th class="p-3">MAC Address</th>
+                <th class="p-3">EMP Name</th>
+                <th class="p-3">Username</th>
+                <th class="p-3">Address/Location</th>
+                <th class="p-3">Date</th>
+                <th class="p-3">Remark</th>
+                <th class="p-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="ontTableBody">
+              <tr><td colspan="8" class="text-center p-4">Loading Data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Add / Edit Modal -->
+  <div id="ontModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
+      <div class="bg-slate-900 px-6 py-4 flex justify-between items-center">
+        <h3 id="modalTitle" class="text-white font-bold text-sm">Add ONT Details</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="ontForm" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4 text-xs">
+        <input type="hidden" id="editDbId">
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">MAC Address *</label>
+            <input type="text" id="formMac" required placeholder="e.g. 20:2B:C1:28:9B:D2" class="w-full p-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">EMP Name</label>
+            <input type="text" id="formEmp" placeholder="e.g. Subhash Singh" class="w-full p-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Username</label>
+            <input type="text" id="formUsername" placeholder="e.g. user_123" class="w-full p-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Date</label>
+            <input type="text" id="formDate" placeholder="e.g. 05-May-2025" class="w-full p-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Address / Location</label>
+          <input type="text" id="formAddress" placeholder="e.g. Bhowali Market" class="w-full p-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Remark</label>
+          <input type="text" id="formRemark" placeholder="e.g. Installed via Router" class="w-full p-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal()" class="px-4 py-2 border rounded-md font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
+          <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-md font-bold hover:bg-blue-700">Save Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let ontData = [];
+    let myChart = null;
+
+    window.onload = function() {
+      fetchOntDetails();
+    };
+
+    async function fetchOntDetails() {
+      try {
+        const response = await fetch('/api/ont-details');
+        ontData = await response.json();
+        renderTable(ontData);
+        initGraph();
+      } catch (error) {
+        console.error("Error fetching ONT details:", error);
+      }
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('ontTableBody');
+      tbody.innerHTML = '';
+      document.getElementById('ontCount').innerText = data.length;
+
+      if(data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center p-4 text-slate-400">No Records Found</td></tr>`;
+        return;
+      }
+
+      data.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-b hover:bg-slate-50 text-slate-700';
+        tr.innerHTML = `
+          <td class="p-3 font-semibold">${item.sno || (index + 1)}</td>
+          <td class="p-3 font-bold text-blue-600">${item.mac || '--'}</td>
+          <td class="p-3">${item.emp_name || '--'}</td>
+          <td class="p-3">${item.username || '--'}</td>
+          <td class="p-3 font-medium">${item.address || '--'}</td>
+          <td class="p-3 text-slate-500">${item.date || '--'}</td>
+          <td class="p-3 text-slate-500">${item.remark || '--'}</td>
+          <td class="p-3 text-center">
+            <button onclick="openModal('edit', ${item.db_id})" class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded text-[11px] font-bold">
+              <i class="fa-solid fa-pen-to-square"></i> Edit
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openModal(type, dbId = null) {
+      const modal = document.getElementById('ontModal');
+      const title = document.getElementById('modalTitle');
+      
+      if (type === 'add') {
+        title.innerText = 'Add New ONT Details';
+        document.getElementById('editDbId').value = '';
+        document.getElementById('ontForm').reset();
+      } else if (type === 'edit') {
+        title.innerText = 'Edit ONT Details';
+        const item = ontData.find(d => d.db_id === dbId);
+        if (item) {
+          document.getElementById('editDbId').value = item.db_id;
+          document.getElementById('formMac').value = item.mac !== '--' ? item.mac : '';
+          document.getElementById('formEmp').value = item.emp_name !== '--' ? item.emp_name : '';
+          document.getElementById('formUsername').value = item.username !== '--' ? item.username : '';
+          document.getElementById('formAddress').value = item.address !== '--' ? item.address : '';
+          document.getElementById('formDate').value = item.date !== '--' ? item.date : '';
+          document.getElementById('formRemark').value = item.remark !== '--' ? item.remark : '';
+        }
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('ontModal').classList.add('hidden');
+    }
+
+    async function handleFormSubmit(event) {
+      event.preventDefault();
+      const dbId = document.getElementById('editDbId').value;
+
+      const payload = {
+        mac: document.getElementById('formMac').value,
+        emp_name: document.getElementById('formEmp').value,
+        username: document.getElementById('formUsername').value,
+        address: document.getElementById('formAddress').value,
+        date: document.getElementById('formDate').value,
+        remark: document.getElementById('formRemark').value
+      };
+
+      let url = '/api/ont-details/add';
+      let method = 'POST';
+
+      if (dbId) {
+        url = `/api/ont-details/update/${dbId}`;
+        method = 'PUT';
+      }
+
+      try {
+        const res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (result.status === 'success') {
+          closeModal();
+          fetchOntDetails();
+        } else {
+          alert('Error: ' + result.message);
+        }
+      } catch (err) {
+        alert('Failed to save ONT data');
+      }
+    }
+
+    function filterOnts() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = ontData.filter(d => 
+        (d.mac && d.mac.toLowerCase().includes(q)) ||
+        (d.username && d.username.toLowerCase().includes(q)) ||
+        (d.address && d.address.toLowerCase().includes(q)) ||
+        (d.emp_name && d.emp_name.toLowerCase().includes(q))
+      );
+      renderTable(filtered);
+    }
+
+    function exportToExcel() {
+      const worksheet = XLSX.utils.json_to_sheet(ontData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "ONT Data");
+      XLSX.writeFile(workbook, "ONT_Details_Report.xlsx");
+    }
+
+    const locations = ['Bhowali', 'Ramgarh', 'Someshwar', 'Ranikhet'];
+
+    function initGraph() {
+      const ctx = document.getElementById('ontLocationChart').getContext('2d');
+      const installedCounts = [0, 0, 0, 0];
+
+      ontData.forEach(item => {
+        const addr = item.address ? item.address.toLowerCase() : '';
+        locations.forEach((loc, idx) => {
+          if (addr.includes(loc.toLowerCase())) {
+            installedCounts[idx]++;
+          }
+        });
+      });
+
+      if (myChart) {
+        myChart.destroy();
+      }
+
+      myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: locations,
+          datasets: [{
+            label: 'ONT Allocated Count',
+            data: installedCounts,
+            backgroundColor: '#3b82f6'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

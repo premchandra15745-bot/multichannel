@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multichannel Network Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100 font-sans text-slate-700 flex h-screen overflow-hidden">
+
+  <!-- Hidden Input File for Inactive Customer Upload -->
+  <input type="file" id="inactiveExcelFileInput" style="display: none;" accept=".xlsx, .xls, .csv" onchange="uploadInactiveExcelDirect(this)">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between hidden md:flex">
+    <div>
+      <div class="p-4 flex items-center gap-3 border-b border-slate-800">
+        <i class="fa-solid fa-wifi text-blue-500 text-2xl"></i>
+        <h1 class="font-bold text-white leading-tight">MULTICHANNEL<br><span class="text-blue-400 text-xs tracking-widest">NETWORK</span></h1>
+      </div>
+      <nav class="p-4 space-y-4 text-xs font-semibold">
+        <a href="/" class="flex items-center gap-3 bg-blue-600 text-white p-2.5 rounded-md"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+        
+        <div>
+          <p class="text-slate-500 uppercase tracking-wider mb-2 text-[10px]">Complaint Management</p>
+          <div class="space-y-1 text-slate-400 pl-2">
+            <a href="/new-complaint" class="block py-1 hover:text-white"><i class="fa-regular fa-plus-square mr-2"></i> New Complaint</a>
+            <a href="/complaint-list" class="block py-1 hover:text-white"><i class="fa-solid fa-list mr-2"></i> Complaint List</a>
+            <a href="/complaint-list?status=Pending" class="block py-1 hover:text-white"><i class="fa-regular fa-clock mr-2"></i> Pending Complaints</a>
+            <a href="/complaint-list?status=Resolved" class="block py-1 hover:text-white"><i class="fa-regular fa-check-circle mr-2"></i> Resolved Complaints</a>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-slate-500 uppercase tracking-wider mb-2 text-[10px]">Customer Management</p>
+          <div class="space-y-1 text-slate-400 pl-2">
+            <a href="/all-customers" class="block py-1 hover:text-white"><i class="fa-solid fa-users mr-2"></i> All Customers</a>
+            <a href="/active-customers" class="block py-1 hover:text-white"><i class="fa-solid fa-user-check mr-2"></i> Active Customers</a>
+            
+            <!-- Direct Upload Trigger Link -->
+            <a href="javascript:void(0);" onclick="document.getElementById('inactiveExcelFileInput').click()" class="block py-1 hover:text-white">
+              <i class="fa-solid fa-user-xmark mr-2"></i> Inactive Customers (Upload)
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-slate-500 uppercase tracking-wider mb-2 text-[10px]">ONT Management</p>
+          <div class="space-y-1 text-slate-400 pl-2">
+            <a href="/ont-details" class="block py-1 hover:text-white"><i class="fa-solid fa-server mr-2"></i> ONT Details</a>
+            <a href="/ont-inventory" class="block py-1 hover:text-white"><i class="fa-solid fa-boxes-stacked mr-2"></i> ONT Inventory</a>
+          </div>
+        </div>
+      </nav>
+    </div>
+    <div class="p-4 border-t border-slate-800">
+      <a href="/logout" class="text-red-400 text-xs flex items-center gap-2"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 overflow-y-auto">
+    <!-- Top Header -->
+    <header class="bg-white p-4 shadow-sm flex justify-between items-center px-6">
+      <h2 class="text-lg font-bold text-slate-800">Dashboard <span class="text-xs font-normal text-slate-400 block">Internet Complaint Management System</span></h2>
+      <div class="flex items-center gap-4">
+        <div class="text-right">
+          <p class="text-xs font-bold text-slate-800">Admin</p>
+          <p class="text-[10px] text-slate-400">Super Admin</p>
+        </div>
+        <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold">A</div>
+      </div>
+    </header>
+
+    <!-- Content Wrapper -->
+    <div class="p-6 space-y-6">
+
+      <!-- Search Bar & Top Import Button -->
+      <div class="bg-white p-4 rounded-xl shadow-sm space-y-3">
+        <div class="flex flex-col md:flex-row gap-3 items-center justify-between">
+          <div class="relative flex-1 w-full">
+            <input type="text" id="searchInput" oninput="liveSearch()" 
+                   placeholder="Search by Username, Mobile, Subscriber ID or Email..." 
+                   class="w-full p-2.5 pl-9 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+          </div>
+
+          <div class="flex gap-2 w-full md:w-auto">
+            <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="uploadExcelFile()">
+            <button onclick="document.getElementById('fileInput').click()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 w-full md:w-auto justify-center">
+              <i class="fa-solid fa-file-excel"></i> Import Excel/CSV File
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Search Dropdown Results -->
+        <div id="searchResults" class="hidden border rounded-lg p-2 bg-slate-50 max-h-60 overflow-y-auto space-y-2"></div>
+      </div>
+
+      <!-- Customer Details Card -->
+      <div id="customerCard" class="hidden bg-white p-5 rounded-xl shadow-sm border border-blue-200 space-y-4">
+        <div class="flex justify-between items-center border-b pb-3">
+          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2"><i class="fa-solid fa-user text-blue-600"></i> Customer Details</h3>
+          <span id="custPackage" class="bg-blue-100 text-blue-700 text-[11px] font-bold px-2.5 py-0.5 rounded-full">Package: -</span>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+          <div><p class="text-slate-400">Username</p><p id="custUsername" class="font-bold text-blue-600">-</p></div>
+          <div><p class="text-slate-400">Subscriber ID</p><p id="custSubId" class="font-bold text-slate-800">-</p></div>
+          <div><p class="text-slate-400">Mobile Number</p><p id="custMobile" class="font-bold text-slate-800">-</p></div>
+          <div><p class="text-slate-400">Email</p><p id="custEmail" class="font-bold text-slate-800">-</p></div>
+          <div><p class="text-slate-400">Renewal Date</p><p id="custRenewal" class="font-bold text-green-600">-</p></div>
+          <div><p class="text-slate-400">Registration Date</p><p id="custRegDate" class="font-bold text-slate-800">-</p></div>
+          <div><p class="text-slate-400">Balance</p><p id="custBalance" class="font-bold text-orange-500">0</p></div>
+        </div>
+      </div>
+      
+      <!-- Top Metrics Row 1 -->
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 flex justify-between items-center">
+          <div>
+            <p class="text-xs text-slate-400 font-semibold">Total Complaints</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-800">{{ stats.total_complaints }}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-lg">
+            <i class="fa-solid fa-clipboard-list"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-orange-500 flex justify-between items-center">
+          <div>
+            <p class="text-xs text-slate-400 font-semibold">Pending Complaints</p>
+            <h3 class="text-2xl font-bold mt-1 text-orange-500">{{ stats.pending_complaints }}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 text-lg">
+            <i class="fa-regular fa-clock"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500 flex justify-between items-center">
+          <div>
+            <p class="text-xs text-slate-400 font-semibold">Resolved Today</p>
+            <h3 class="text-2xl font-bold mt-1 text-green-500">{{ stats.resolved_today }}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-500 text-lg">
+            <i class="fa-regular fa-check-circle"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500 flex justify-between items-center">
+          <div>
+            <p class="text-xs text-slate-400 font-semibold">Total Customers</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-800">{{ stats.total_customers }}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 text-lg">
+            <i class="fa-solid fa-users"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-teal-500 flex justify-between items-center">
+          <div>
+            <p class="text-xs text-slate-400 font-semibold">Total ONT Installed</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-800">{{ stats.total_ont }}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center text-teal-600 text-lg">
+            <i class="fa-solid fa-network-wired"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer Status Cards Row -->
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+
+        <!-- Active Customers Card -->
+        <a href="/active-customers" class="bg-emerald-50/50 hover:bg-emerald-50 border border-emerald-200 p-4 rounded-xl shadow-sm flex flex-col justify-between transition group">
+          <div class="flex justify-between items-start">
+            <p class="text-xs font-bold text-emerald-700">Active Customers</p>
+            <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition">
+              <i class="fa-solid fa-user-check text-lg"></i>
+            </div>
+          </div>
+          <div class="mt-4">
+            <h3 class="text-2xl font-extrabold text-emerald-900">{{ stats.active_customers or '0' }} <span class="text-xs font-semibold text-emerald-600">({{ stats.active_percentage or '0' }}%)</span></h3>
+            <p class="text-[11px] font-bold text-emerald-600 mt-2 flex items-center gap-1 group-hover:translate-x-1 transition">
+              View Details <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </p>
+          </div>
+        </a>
+
+        <!-- Inactive Customers Card (Direct File Upload Trigger) -->
+        <div onclick="document.getElementById('inactiveExcelFileInput').click()" class="bg-rose-50/50 hover:bg-rose-50 border border-rose-200 p-4 rounded-xl shadow-sm flex flex-col justify-between transition group cursor-pointer">
+          <div class="flex justify-between items-start">
+            <p class="text-xs font-bold text-rose-700">Inactive Customers</p>
+            <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 group-hover:scale-110 transition">
+              <i class="fa-solid fa-user-xmark text-lg"></i>
+            </div>
+          </div>
+          <div class="mt-4">
+            <h3 class="text-2xl font-extrabold text-rose-900">{{ stats.inactive_customers or '0' }} <span class="text-xs font-semibold text-rose-600">({{ stats.inactive_percentage or '0' }}%)</span></h3>
+            <p class="text-[11px] font-bold text-rose-600 mt-2 flex items-center gap-1 group-hover:translate-x-1 transition">
+              Upload Inactive Excel <i class="fa-solid fa-file-excel text-[10px]"></i>
+            </p>
+          </div>
+        </div>
+
+        <!-- Inactive - 30 to 59 Days (Download Excel) -->
+        <a href="/download-inactive/30" class="bg-white hover:bg-orange-50/30 border border-slate-200 p-4 rounded-xl shadow-sm flex flex-col justify-between transition group">
+          <div class="flex justify-between items-start">
+            <p class="text-xs font-semibold text-slate-500">Inactive (30-60 Days)</p>
+            <div class="w-9 h-9 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500">
+              <i class="fa-regular fa-calendar-minus"></i>
+            </div>
+          </div>
+          <div class="mt-4">
+            <h3 class="text-2xl font-extrabold text-slate-800">{{ stats.inactive_30_days or '0' }}</h3>
+            <p class="text-[11px] font-semibold text-orange-600 mt-2 flex items-center gap-1 group-hover:translate-x-1 transition">
+              Download Excel <i class="fa-solid fa-file-excel text-[10px]"></i>
+            </p>
+          </div>
+        </a>
+
+        <!-- Inactive - 60 to 89 Days (Download Excel) -->
+        <a href="/download-inactive/60" class="bg-white hover:bg-amber-50/30 border border-slate-200 p-4 rounded-xl shadow-sm flex flex-col justify-between transition group">
+          <div class="flex justify-between items-start">
+            <p class="text-xs font-semibold text-slate-500">Inactive (60-90 Days)</p>
+            <div class="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500">
+              <i class="fa-regular fa-calendar-xmark"></i>
+            </div>
+          </div>
+          <div class="mt-4">
+            <h3 class="text-2xl font-extrabold text-slate-800">{{ stats.inactive_60_days or '0' }}</h3>
+            <p class="text-[11px] font-semibold text-amber-600 mt-2 flex items-center gap-1 group-hover:translate-x-1 transition">
+              Download Excel <i class="fa-solid fa-file-excel text-[10px]"></i>
+            </p>
+          </div>
+        </a>
+
+        <!-- Inactive - 90+ Days (Download Excel) -->
+        <a href="/download-inactive/90" class="bg-white hover:bg-purple-50/30 border border-slate-200 p-4 rounded-xl shadow-sm flex flex-col justify-between transition group">
+          <div class="flex justify-between items-start">
+            <p class="text-xs font-semibold text-slate-500">Inactive (90+ Days)</p>
+            <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
+              <i class="fa-solid fa-user-clock"></i>
+            </div>
+          </div>
+          <div class="mt-4">
+            <h3 class="text-2xl font-extrabold text-slate-800">{{ stats.inactive_90_days or '0' }}</h3>
+            <p class="text-[11px] font-semibold text-purple-600 mt-2 flex items-center gap-1 group-hover:translate-x-1 transition">
+              Download Excel <i class="fa-solid fa-file-excel text-[10px]"></i>
+            </p>
+          </div>
+        </a>
+
+      </div>
+
+      <!-- Upload Daily Customer Data & Last Upload Summary Box -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Drag & Drop Upload Section -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-dashed border-slate-300 md:col-span-2 flex flex-col justify-between">
+          <div>
+            <h4 class="text-xs font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-cloud-arrow-up text-blue-600"></i> Upload Daily Customer Data
+            </h4>
+            <p class="text-[11px] text-slate-400 mt-0.5">Upload daily customer data (Excel/CSV) to update active/inactive status.</p>
+          </div>
+
+          <div onclick="document.getElementById('fileInput').click()" class="border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50 hover:bg-blue-50/40 rounded-lg p-6 my-4 text-center cursor-pointer transition">
+            <i class="fa-solid fa-upload text-2xl text-slate-400 mb-2"></i>
+            <p class="text-xs font-bold text-slate-700">Click to upload or drag & drop</p>
+            <p class="text-[10px] text-slate-400 mt-1">Excel/CSV files only</p>
+          </div>
+        </div>
+
+        <!-- Last Upload Summary Card -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+          <div class="flex justify-between items-center border-b pb-3">
+            <h4 class="text-xs font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-regular fa-file-excel text-green-600 text-sm"></i> Last Upload Summary
+            </h4>
+          </div>
+
+          <div class="space-y-2 py-3 text-xs">
+            <div class="flex justify-between text-slate-500">
+              <span>File Name</span>
+              <span class="font-bold text-slate-800">{{ upload_summary.file_name or 'customer_data.xlsx' }}</span>
+            </div>
+            <div class="flex justify-between text-slate-500">
+              <span>Uploaded On</span>
+              <span class="font-bold text-slate-800">{{ upload_summary.uploaded_on or '--' }}</span>
+            </div>
+            <div class="flex justify-between text-slate-500">
+              <span>Total Records</span>
+              <span class="font-bold text-slate-800">{{ upload_summary.total_records or stats.total_customers }}</span>
+            </div>
+            <div class="flex justify-between text-slate-500">
+              <span>Active Customers</span>
+              <span class="font-bold text-emerald-600">{{ upload_summary.active_customers or stats.active_customers }}</span>
+            </div>
+            <div class="flex justify-between text-slate-500">
+              <span>Inactive Customers</span>
+              <span class="font-bold text-rose-600">{{ upload_summary.inactive_customers or stats.inactive_customers }}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Table Section: Recent Complaints -->
+      <div class="bg-white rounded-xl shadow-sm p-4">
+        <div class="flex justify-between items-center mb-3">
+          <h4 class="text-xs font-bold text-slate-700">Recent Complaints</h4>
+          <a href="/complaint-list" class="text-xs text-blue-600 font-semibold hover:underline">View All</a>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-slate-500 border-b">
+                <th class="p-2">ID</th>
+                <th class="p-2">Customer Name</th>
+                <th class="p-2">Mobile Number</th>
+                <th class="p-2">Area</th>
+                <th class="p-2">Complaint Type</th>
+                <th class="p-2">Status</th>
+                <th class="p-2">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in complaints %}
+              <tr class="border-b hover:bg-slate-50">
+                <td class="p-2 font-semibold text-blue-600">{{ item.id }}</td>
+                <td class="p-2">{{ item.name }}</td>
+                <td class="p-2">{{ item.mobile }}</td>
+                <td class="p-2">{{ item.area }}</td>
+                <td class="p-2">{{ item.type }}</td>
+                <td class="p-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] 
+                    {% if item.status == 'Pending' %} bg-orange-100 text-orange-600
+                    {% elif item.status == 'In Progress' %} bg-blue-100 text-blue-600
+                    {% else %} bg-green-100 text-green-600 {% endif %}">
+                    {{ item.status }}
+                  </span>
+                </td>
+                <td class="p-2 text-slate-400">{{ item.date }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // General Excel File Upload Function
+    function uploadExcelFile() {
+      const fileInput = document.getElementById('fileInput');
+      if (!fileInput.files[0]) return;
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      fetch('/upload-excel', { method: 'POST', body: formData })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message);
+        if (data.status === 'success') {
+          location.reload();
+        }
+      });
+    }
+
+    // Direct Inactive Excel Upload Function
+    function uploadInactiveExcelDirect(input) {
+      if (!input.files || !input.files[0]) return;
+
+      const formData = new FormData();
+      formData.append('file', input.files[0]);
+
+      alert("Inactive Customers process ho rahe hain, kripya thoda wait karein...");
+
+      fetch('/upload-excel?target_status=Inactive', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message);
+        if (data.status === 'success') {
+          location.reload();
+        }
+        input.value = '';
+      })
+      .catch(err => {
+        alert("Upload fail ho gaya!");
+        input.value = '';
+      });
+    }
+
+    // Live Search Function
+    function liveSearch() {
+      const query = document.getElementById('searchInput').value.trim();
+      const resultsDiv = document.getElementById('searchResults');
+
+      if (query.length < 2) {
+        resultsDiv.classList.add('hidden');
+        return;
+      }
+
+      fetch(`/search?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+          resultsDiv.innerHTML = '';
+          if (data.length === 0) {
+            resultsDiv.innerHTML = '<p class="text-xs text-slate-400 p-2">No matching customer found.</p>';
+          } else {
+            data.forEach(cust => {
+              const div = document.createElement('div');
+              div.className = "p-2 bg-white border rounded hover:bg-blue-50 cursor-pointer flex justify-between text-xs";
+              div.innerHTML = `<span><strong class="text-blue-600">${cust.username}</strong> | ID: ${cust.subscriber_id}</span> <span class="text-slate-500">${cust.mobile}</span>`;
+              div.onclick = () => { showCustomerCard(cust); resultsDiv.classList.add('hidden'); };
+              resultsDiv.appendChild(div);
+            });
+          }
+          resultsDiv.classList.remove('hidden');
+        });
+    }
+
+    // Populate Data Card
+    function showCustomerCard(data) {
+      document.getElementById('custUsername').innerText = data.username || '-';
+      document.getElementById('custSubId').innerText = data.subscriber_id || '-';
+      document.getElementById('custMobile').innerText = data.mobile || '-';
+      document.getElementById('custEmail').innerText = data.email || '-';
+      document.getElementById('custRenewal').innerText = data.renewal_date || '-';
+      document.getElementById('custRegDate').innerText = data.reg_date || '-';
+      document.getElementById('custBalance').innerText = data.balance || '0';
+      document.getElementById('custPackage').innerText = 'Package: ' + (data.package || '-');
+      
+      document.getElementById('customerCard').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complaint List - Multichannel Network</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100 font-sans text-slate-700 flex h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between hidden md:flex">
+    <div>
+      <div class="p-4 flex items-center gap-3 border-b border-slate-800">
+        <i class="fa-solid fa-wifi text-blue-500 text-2xl"></i>
+        <h1 class="font-bold text-white leading-tight">MULTICHANNEL<br><span class="text-blue-400 text-xs tracking-widest">NETWORK</span></h1>
+      </div>
+      <nav class="p-4 space-y-4 text-xs font-semibold">
+        <a href="/" class="flex items-center gap-3 text-slate-400 hover:text-white p-2 rounded-md"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+        
+        <div>
+          <p class="text-slate-500 uppercase tracking-wider mb-2 text-[10px]">Complaint Management</p>
+          <div class="space-y-1 text-slate-400 pl-2">
+            <a href="/new-complaint" class="block py-1 hover:text-white"><i class="fa-regular fa-plus-square mr-2"></i> New Complaint</a>
+            <a href="/complaint-list" class="flex items-center gap-2 bg-blue-600 text-white p-2 rounded-md"><i class="fa-solid fa-list"></i> Complaint List</a>
+            <button onclick="applyStatusFilter('Pending')" class="w-full text-left py-1 hover:text-white flex items-center"><i class="fa-regular fa-clock mr-2"></i> Pending Complaints</button>
+            <button onclick="applyStatusFilter('Resolved')" class="w-full text-left py-1 hover:text-white flex items-center"><i class="fa-regular fa-check-circle mr-2"></i> Resolved Complaints</button>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-slate-500 uppercase tracking-wider mb-2 text-[10px]">Customer Management</p>
+          <div class="space-y-1 text-slate-400 pl-2">
+            <a href="/all-customers" class="block py-1 hover:text-white"><i class="fa-solid fa-users mr-2"></i> All Customers</a>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-slate-500 uppercase tracking-wider mb-2 text-[10px]">ONT Management</p>
+          <div class="space-y-1 text-slate-400 pl-2">
+            <a href="/ont-details" class="block py-1 hover:text-white flex items-center"><i class="fa-solid fa-server mr-2"></i> ONT Details</a>
+            <a href="/ont-inventory" class="block py-1 hover:text-white flex items-center"><i class="fa-solid fa-boxes-stacked mr-2"></i> ONT Inventory</a>
+          </div>
+        </div>
+      </nav>
+    </div>
+    <div class="p-4 border-t border-slate-800">
+      <a href="/logout" class="text-red-400 text-xs flex items-center gap-2"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 overflow-y-auto">
+    <!-- Header -->
+    <header class="bg-white p-4 shadow-sm flex justify-between items-center px-6">
+      <div>
+        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-bars text-slate-400 text-sm"></i> Complaint List
+        </h2>
+        <p class="text-[11px] text-slate-400">Dashboard > Complaint Management > <span class="text-slate-600">Complaint List</span></p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <p class="text-xs font-bold text-slate-800">Admin</p>
+          <p class="text-[10px] text-slate-400">Super Admin</p>
+        </div>
+        <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600">
+          <i class="fa-solid fa-user"></i>
+        </div>
+      </div>
+    </header>
+
+    <div class="p-6 space-y-4">
+      <!-- Search & Controls -->
+      <div class="bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
+        <div class="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto flex-1">
+          <div class="relative w-full md:w-72">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search ID, Customer, Employee, Mobile..." class="w-full pl-9 pr-3 py-2 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+
+          <!-- Status Filter Dropdown -->
+          <select id="statusFilter" onchange="filterTable()" class="w-full md:w-40 py-2 px-3 border rounded-lg text-xs bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-slate-700">
+            <option value="ALL">All Status</option>
+            <option value="Pending">Pending Only</option>
+            <option value="Resolved">Resolved Only</option>
+          </select>
+
+          <!-- Area Filter Dropdown -->
+          <select id="areaFilter" onchange="filterTable()" class="w-full md:w-44 py-2 px-3 border rounded-lg text-xs bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-slate-700">
+            <option value="ALL">All Areas</option>
+            <option value="Haldwani">Haldwani</option>
+            <option value="Century">Century</option>
+            <option value="Someshwar">Someshwar</option>
+            <option value="Jyolikote">Jyolikote</option>
+            <option value="Ramgarh">Ramgarh</option>
+            <option value="Bhowali">Bhowali</option>
+            <option value="Other">Other Areas</option>
+          </select>
+        </div>
+
+        <a href="/new-complaint" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1 shrink-0">
+          <i class="fa-solid fa-plus"></i> New Complaint
+        </a>
+      </div>
+
+      <!-- Full Width Table Box -->
+      <div class="bg-white rounded-xl border shadow-sm overflow-hidden w-full">
+        <div class="p-3 border-b flex justify-between items-center bg-slate-50">
+          <p class="text-xs font-bold text-slate-700">Complaints Overview</p>
+          <p class="text-xs text-slate-600">Total: <span id="totalCount" class="text-blue-600 font-bold">0</span></p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-100 border-b text-slate-600 font-bold">
+                <th class="p-3">Complaint ID</th>
+                <th class="p-3">Customer</th>
+                <th class="p-3">Area</th>
+                <th class="p-3">Assigned Employee (Manual Edit)</th>
+                <th class="p-3">Category / Type</th>
+                <th class="p-3">Priority</th>
+                <th class="p-3">Status</th>
+                <th class="p-3">Created On</th>
+                <th class="p-3">Resolved On</th>
+                <th class="p-3">Resolution Time</th>
+                <th class="p-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="complaintTableBody">
+              <tr>
+                <td colspan="11" class="text-center p-4 text-slate-400">Loading complaints...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Detailed Modal Popup -->
+  <div id="detailsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex justify-center items-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden border">
+      
+      <!-- Modal Header -->
+      <div class="bg-slate-800 text-white p-3 px-4 flex justify-between items-center text-xs">
+        <h3 class="font-bold flex items-center gap-2">
+          <i class="fa-solid fa-circle-info text-blue-400"></i> Customer & Complaint Details
+        </h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-base"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Modal Body Table -->
+      <div class="p-4 bg-slate-50 text-xs space-y-3">
+        <input type="hidden" id="mCurrentDbId">
+        <input type="hidden" id="mCurrentUsername">
+
+        <table class="w-full border-collapse border border-slate-300 bg-white">
+          <tbody>
+            <!-- 1. Customer Information -->
+            <tr class="bg-slate-100 font-bold border-b">
+              <td colspan="2" class="p-2 text-blue-900 flex justify-between items-center">
+                <span><i class="fa-solid fa-user mr-1"></i> Customer Information</span>
+                <button type="button" onclick="enableCustomerEdit()" id="btnEnableEdit" class="text-blue-600 hover:text-blue-800 text-[11px] font-semibold flex items-center gap-1 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+                  <i class="fa-solid fa-pen-to-square"></i> Edit Info
+                </button>
+              </td>
+            </tr>
+            <tr class="border-b">
+              <td class="p-2 font-bold w-1/3 bg-slate-50 border-r">Customer Name</td>
+              <td class="p-2">
+                <input type="text" id="mCustNameInput" disabled class="w-full p-1.5 border border-transparent rounded text-xs outline-none bg-transparent font-bold text-slate-900 transition-all">
+              </td>
+            </tr>
+            <tr class="border-b"><td class="p-2 font-bold bg-slate-50 border-r">Subscriber ID</td><td class="p-2 font-bold text-blue-600" id="mSubscriberId">--</td></tr>
+            <tr class="border-b"><td class="p-2 font-bold bg-slate-50 border-r">Username</td><td class="p-2 font-bold text-slate-800" id="mUsername">--</td></tr>
+            <tr class="border-b"><td class="p-2 font-bold bg-slate-50 border-r">Contact Details</td><td class="p-2" id="mContact">--</td></tr>
+            <tr class="border-b">
+              <td class="p-2 font-bold bg-slate-50 border-r">Address / Location</td>
+              <td class="p-2">
+                <textarea id="mAddressInput" disabled rows="2" class="w-full p-1.5 border border-transparent rounded text-xs outline-none bg-transparent font-medium text-slate-800 transition-all" placeholder="Enter Customer Address..."></textarea>
+              </td>
+            </tr>
+            <tr class="border-b"><td class="p-2 font-bold bg-slate-50 border-r">Plan / Package</td><td class="p-2 text-blue-700 font-medium" id="mPackage">--</td></tr>
+
+            <!-- 2. Complaint Info -->
+            <tr class="bg-slate-100 font-bold border-y">
+              <td colspan="2" class="p-2 text-blue-900"><i class="fa-solid fa-file-invoice mr-1"></i> Complaint Info</td>
+            </tr>
+            <tr class="border-b"><td class="p-2 font-bold bg-slate-50 border-r">Complaint ID</td><td class="p-2 font-bold text-blue-600" id="mCmpId">--</td></tr>
+            <tr class="border-b"><td class="p-2 font-bold bg-slate-50 border-r">Area Zone</td><td class="p-2 font-semibold text-purple-700" id="mArea">--</td></tr>
+            <tr class="border-b"><td class="p-2 font-bold bg-slate-50 border-r">Assigned Employee</td><td class="p-2 font-semibold text-slate-800" id="mEmpName">--</td></tr>
+            <tr class="border-b"><td class="p-2 font-bold bg-slate-50 border-r">Category / Type</td><td class="p-2" id="mCategory">--</td></tr>
+            <tr class="border-b"><td class="p-2 font-bold bg-slate-50 border-r">Priority & Status</td><td class="p-2" id="mStatus">--</td></tr>
+            <tr class="border-b"><td class="p-2 font-bold bg-slate-50 border-r">Created On</td><td class="p-2 font-medium text-slate-700" id="mCreatedOn">--</td></tr>
+            <tr class="border-b"><td class="p-2 font-bold bg-slate-50 border-r">Resolved On</td><td class="p-2 font-medium text-emerald-700" id="mResolvedOn">--</td></tr>
+            <tr class="border-b"><td class="p-2 font-bold bg-slate-50 border-r">Duration Taken</td><td class="p-2 font-bold text-blue-600" id="mDuration">--</td></tr>
+            <tr class="border-b"><td class="p-2 font-bold bg-slate-50 border-r text-red-600">Complaint Reason</td><td class="p-2 text-red-600 font-medium whitespace-pre-wrap" id="mReason">--</td></tr>
+          </tbody>
+        </table>
+
+        <div class="flex justify-between items-center pt-2">
+          <button id="btnSaveCustomer" onclick="saveCustomerDetails()" disabled class="px-4 py-1.5 bg-slate-400 text-white font-bold rounded text-xs flex items-center gap-1.5 shadow-sm cursor-not-allowed transition-all">
+            <i class="fa-solid fa-floppy-disk"></i> Save Changes
+          </button>
+          <button onclick="closeModal()" class="px-4 py-1.5 bg-slate-700 hover:bg-slate-800 text-white font-bold rounded text-xs">Close</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let allComplaints = [];
+
+    // Helper function to calculate duration between created_at and resolved_at
+    function calculateDuration(createdStr, resolvedStr) {
+      if (!createdStr || !resolvedStr || resolvedStr === '--' || resolvedStr === 'N/A') return '--';
+      
+      const created = new Date(createdStr);
+      const resolved = new Date(resolvedStr);
+      
+      if (isNaN(created) || isNaN(resolved)) return '--';
+      
+      const diffMs = resolved - created;
+      if (diffMs < 0) return '0 mins';
+
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      const hours = Math.floor(diffMins / 60);
+      const days = Math.floor(hours / 24);
+
+      if (days > 0) {
+        const remHours = hours % 24;
+        return `${days} day${days > 1 ? 's' : ''} ${remHours} hr${remHours > 1 ? 's' : ''}`;
+      } else if (hours > 0) {
+        const remMins = diffMins % 60;
+        return `${hours} hr${hours > 1 ? 's' : ''} ${remMins} min${remMins > 1 ? 's' : ''}`;
+      } else {
+        return `${diffMins} min${diffMins > 1 ? 's' : ''}`;
+      }
+    }
+
+    function fetchComplaints() {
+      fetch('/api/complaints')
+        .then(res => res.json())
+        .then(data => {
+          allComplaints = data;
+          document.getElementById('totalCount').innerText = allComplaints.length;
+          filterTable();
+        })
+        .catch(err => {
+          console.error("Error fetching data:", err);
+          document.getElementById('complaintTableBody').innerHTML = `<tr><td colspan="11" class="text-center p-4 text-red-500">Failed to load complaints.</td></tr>`;
+        });
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('complaintTableBody');
+      tbody.innerHTML = '';
+
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" class="text-center p-4 text-slate-400">No complaints found.</td></tr>`;
+        return;
+      }
+
+      data.forEach((item) => {
+        let statusBadge = item.status === 'Resolved' 
+          ? `<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold text-[10px]"><i class="fa-solid fa-check"></i> Resolved</span>`
+          : `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold text-[10px]"><i class="fa-regular fa-clock"></i> Pending</span>`;
+
+        let resolveBtn = item.status === 'Pending'
+          ? `<button onclick="markResolved(${item.db_id}, event)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1"><i class="fa-solid fa-check"></i> Resolve</button>`
+          : `<span class="text-emerald-600 font-bold text-[11px]"><i class="fa-solid fa-circle-check"></i> Done</span>`;
+
+        let resolvedOn = item.resolved_at || '--';
+        let duration = calculateDuration(item.created_at, item.resolved_at);
+
+        const tr = document.createElement('tr');
+        tr.className = 'border-b hover:bg-slate-50 text-slate-700 transition';
+
+        tr.innerHTML = `
+          <td class="p-3 font-bold text-blue-600 hover:underline cursor-pointer" onclick="openDetailsModal(${item.db_id})">${item.complaint_id}</td>
+          <td class="p-3 cursor-pointer" onclick="openDetailsModal(${item.db_id})">
+            <p class="font-bold text-slate-900">${item.customer_name || 'N/A'}</p>
+            <p class="font-medium text-slate-600 text-[11px]">${item.username}</p>
+            <p class="text-[10px] text-slate-400">${item.mobile}</p>
+          </td>
+          <td class="p-3 font-semibold text-slate-800">
+            <span class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-[10px] font-bold">${item.area || 'Other'}</span>
+          </td>
+          <td class="p-3">
+            <div class="flex items-center gap-1">
+              <input type="text" id="emp_input_${item.db_id}" value="${item.employee_name || ''}" placeholder="Enter Employee Name" class="p-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500 w-36 bg-slate-50 focus:bg-white">
+              <button onclick="saveEmployee(${item.db_id})" class="bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded text-[10px]" title="Save Employee">
+                <i class="fa-solid fa-floppy-disk"></i>
+              </button>
+            </div>
+          </td>
+          <td class="p-3 cursor-pointer" onclick="openDetailsModal(${item.db_id})">
+            <p class="font-medium">${item.category}</p>
+            <p class="text-[10px] text-slate-400">${item.type}</p>
+          </td>
+          <td class="p-3"><span class="bg-slate-100 px-2 py-0.5 rounded text-[10px] font-semibold">${item.priority}</span></td>
+          <td class="p-3">${statusBadge}</td>
+          <td class="p-3 text-[11px] text-slate-500">${item.created_at || '--'}</td>
+          <td class="p-3 text-[11px] text-emerald-600 font-medium">${resolvedOn}</td>
+          <td class="p-3 text-[11px] font-bold text-slate-700">${duration}</td>
+          <td class="p-3 flex justify-center items-center gap-2">
+            ${resolveBtn}
+            <button onclick="deleteComplaint(${item.db_id})" class="text-red-500 hover:text-red-700 p-1"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Direct Status Button Action from Sidebar
+    function applyStatusFilter(statusVal) {
+      document.getElementById('statusFilter').value = statusVal;
+      filterTable();
+    }
+
+    // Multi-criteria Filtering
+    function filterTable() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const statusVal = document.getElementById('statusFilter').value;
+      const areaVal = document.getElementById('areaFilter').value;
+
+      const filtered = allComplaints.filter(c => {
+        const matchesQuery = 
+          c.complaint_id.toLowerCase().includes(q) ||
+          c.username.toLowerCase().includes(q) ||
+          (c.customer_name && c.customer_name.toLowerCase().includes(q)) ||
+          c.mobile.toLowerCase().includes(q) ||
+          (c.employee_name && c.employee_name.toLowerCase().includes(q)) ||
+          (c.area && c.area.toLowerCase().includes(q)) ||
+          c.type.toLowerCase().includes(q);
+
+        const matchesStatus = statusVal === 'ALL' || c.status === statusVal;
+        const matchesArea = areaVal === 'ALL' || (c.area && c.area.toLowerCase() === areaVal.toLowerCase());
+
+        return matchesQuery && matchesStatus && matchesArea;
+      });
+
+      renderTable(filtered);
+    }
+
+    function enableCustomerEdit() {
+      const nameInput = document.getElementById('mCustNameInput');
+      const addrInput = document.getElementById('mAddressInput');
+      const saveBtn = document.getElementById('btnSaveCustomer');
+
+      nameInput.disabled = false;
+      addrInput.disabled = false;
+
+      nameInput.classList.remove('border-transparent', 'bg-transparent');
+      nameInput.classList.add('border-blue-400', 'bg-blue-50/50', 'p-1.5');
+
+      addrInput.classList.remove('border-transparent', 'bg-transparent');
+      addrInput.classList.add('border-blue-400', 'bg-blue-50/50', 'p-1.5');
+
+      saveBtn.disabled = false;
+      saveBtn.classList.remove('bg-slate-400', 'cursor-not-allowed');
+      saveBtn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'cursor-pointer');
+
+      nameInput.focus();
+    }
+
+    function saveEmployee(id) {
+      const empName = document.getElementById(`emp_input_${id}`).value;
+
+      fetch(`/api/complaint/assign-employee/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employee_name: empName })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message || 'Employee updated successfully!');
+        let found = allComplaints.find(c => c.db_id == id);
+        if (found) found.employee_name = empName;
+      })
+      .catch(err => {
+        alert("Server error during saving!");
+      });
+    }
+
+    function openDetailsModal(id) {
+      const item = allComplaints.find(c => c.db_id == id);
+      if (!item) return;
+
+      document.getElementById('mCurrentDbId').value = item.db_id;
+      document.getElementById('mCurrentUsername').value = item.username;
+
+      const nameInput = document.getElementById('mCustNameInput');
+      const addrInput = document.getElementById('mAddressInput');
+      const saveBtn = document.getElementById('btnSaveCustomer');
+
+      nameInput.disabled = true;
+      addrInput.disabled = true;
+      nameInput.classList.add('border-transparent', 'bg-transparent');
+      nameInput.classList.remove('border-blue-400', 'bg-blue-50/50');
+      addrInput.classList.add('border-transparent', 'bg-transparent');
+      addrInput.classList.remove('border-blue-400', 'bg-blue-50/50');
+
+      saveBtn.disabled = true;
+      saveBtn.classList.add('bg-slate-400', 'cursor-not-allowed');
+      saveBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'cursor-pointer');
+
+      document.getElementById('mCustNameInput').value = item.customer_name !== 'N/A' ? item.customer_name : '';
+      document.getElementById('mSubscriberId').innerText = item.subscriber_id || 'N/A';
+      document.getElementById('mUsername').innerText = item.username;
+      document.getElementById('mContact').innerText = `Mobile: ${item.mobile} | Email: ${item.email || 'N/A'}`;
+      document.getElementById('mAddressInput').value = item.customer_address !== 'N/A' ? item.customer_address : '';
+      document.getElementById('mPackage').innerText = item.package_plan || 'N/A';
+
+      document.getElementById('mCmpId').innerText = item.complaint_id;
+      document.getElementById('mArea').innerText = item.area || 'Other';
+      document.getElementById('mEmpName').innerText = item.employee_name || 'Not Assigned';
+      document.getElementById('mCategory').innerText = `${item.category || 'N/A'} (${item.type || 'N/A'})`;
+      document.getElementById('mStatus').innerText = `Priority: ${item.priority} | Status: ${item.status}`;
+      document.getElementById('mCreatedOn').innerText = item.created_at || '--';
+      document.getElementById('mResolvedOn').innerText = item.resolved_at || '--';
+      document.getElementById('mDuration').innerText = calculateDuration(item.created_at, item.resolved_at);
+      document.getElementById('mReason').innerText = item.description || 'No description provided.';
+
+      document.getElementById('detailsModal').classList.remove('hidden');
+    }
+
+    function saveCustomerDetails() {
+      const db_id = document.getElementById('mCurrentDbId').value;
+      const username = document.getElementById('mCurrentUsername').value;
+      const newName = document.getElementById('mCustNameInput').value;
+      const newAddress = document.getElementById('mAddressInput').value;
+
+      fetch('/api/customer/update-details', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          complaint_db_id: db_id,
+          username: username,
+          name: newName,
+          address: newAddress
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message || 'Updated successfully!');
+        fetchComplaints();
+        closeModal();
+      })
+      .catch(err => {
+        alert("Error saving customer info!");
+      });
+    }
+
+    function closeModal() {
+      document.getElementById('detailsModal').classList.add('hidden');
+    }
+
+    function markResolved(id, event) {
+      if(event) event.stopPropagation();
+      if(!confirm("Kya aap is complaint ko Resolved mark karna chahte hain?")) return;
+
+      fetch(`/api/complaint/resolve/${id}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(res => {
+          alert(res.message);
+          fetchComplaints();
+        });
+    }
+
+    // Updated Delete Function with Password Protection
+    function deleteComplaint(id) {
+      const password = prompt("Complaint delete karne ke liye password enter karein:");
+
+      if (password === null) {
+        return; // User cancelled prompt
+      }
+
+      if (password !== "263126") {
+        alert("Galat password! Delete request cancel kar di gayi hai.");
+        return;
+      }
+
+      if (!confirm("Kya aap sach me ye complaint delete karna chahte hain?")) return;
+
+      fetch(`/api/complaint/delete/${id}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(res => {
+          alert(res.message);
+          fetchComplaints();
+        })
+        .catch(err => {
+          alert("Error deleting complaint!");
+        });
+    }
+
+    window.onload = fetchComplaints;
+  </script>
+</body>
+</html>
